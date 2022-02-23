@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  cadvisor:
+    image: gcr.io/google-containers/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - 8080:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules:/alertmanager/alert.rules
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - cadvisor
+      - alertmanager
+    ports:
+      - 9090:9090
+    networks:
+      - monitoring
+
+
+  alertmanager:
+    image: prom/alertmanager:v0.23.0
+    container_name: alertmanager
+    restart: unless-stopped
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager:/config
+      - alertmanager-data:/data
+    command: 
+      - "--config.file=/config/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--log.level=debug"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - grafana_data:/var/lib/grafana
+    restart: always
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    networks:
+      - monitoring
+  
+networks:
+  monitoring:
+    external: true
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  alertmanager-data:
