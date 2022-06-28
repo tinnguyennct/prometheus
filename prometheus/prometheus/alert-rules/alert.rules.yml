@@ -1,0 +1,142 @@
+groups:
+### Hosts
+- name: host
+  rules:
+## Status of Hosts
+  - alert: Prometheus Missing
+    expr: absent(up{job="prometheus"})
+    for: 0m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Prometheus job missing (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "A Prometheus job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: Alertmanager Missing
+    expr: absent(up{job="alertmanager"})
+    for: 0m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Prometheus AlertManager job missing (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "A Prometheus AlertManager job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: Service Is Down
+    expr: up{job!="node"} == 0
+    for: 10s
+    labels:
+      severity: "Critical"
+    annotations:
+      summary: "Monitor service non-operational"
+      description: "Service {{ $labels.job }} - {{ $labels.ip }} is down."
+
+## Check port of serivces
+  - alert: check_port_service
+    expr: probe_success{} == 0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "TCP check port {{ $labels.port }} service {{ $labels.service }} failed on {{ $labels.host }} {{ $labels.ip }}"
+      description: "TCP check port {{ $labels.port }} service {{ $labels.service }} failed on {{ $labels.host }} {{ $labels.ip }}"
+
+## CPU RAM Hosts
+  - alert: Host High Memory Usage
+    expr: (sum(node_memory_MemTotal_bytes) - sum(node_memory_MemFree_bytes + node_memory_Buffers_bytes + node_memory_Cached_bytes) ) / sum(node_memory_MemTotal_bytes) * 100 > 85
+    for: 2m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Server memory is almost full"
+      description: "Docker host memory usage is {{ humanize $value}}%. Reported by instance {{ $labels.instance }} - {{ $labels.ip }} of job {{ $labels.job }}."
+
+  - alert: Host High Cpu Load
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+    for: 0m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Host high CPU load (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+## Disk Hosts
+  - alert: Host Out Of Disk Space
+    expr: (node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
+    for: 2m
+    labels:
+      severity: "Critical"
+    annotations:
+      summary: "Host out of disk space (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: Host out of inodes level 1
+    expr: 5 < (node_filesystem_files_free{} / node_filesystem_files{} * 100) < 10
+    for: 5m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Linux disk is almost running out of available inodes above 5% to 10% on {{ $labels.instance }} {{ $labels.ip }}"
+      description: "Linux disk is almost running out of available inodes above 5% to 10% on {{ $labels.instance }} {{ $labels.ip }}"
+
+  - alert: Host out of inodes level 2
+    expr: (node_filesystem_files_free{} / node_filesystem_files{} * 100) < 5
+    for: 5m
+    labels:
+      severity: "Critical"
+    annotations:
+      summary: "Linux disk is almost running out of available inodes < 5% on {{ $labels.instance }} {{ $labels.ip }}"
+      description: "Linux disk is almost running out of available inodes < 5% on {{ $labels.instance }} {{ $labels.ip }}"
+
+  - alert: Host out of disk
+    expr:  ((node_filesystem_avail_bytes{mountpoint=~"/"} / 1024 / 1024 / 1024) < 20) and ((100 - (node_filesystem_avail_bytes{mountpoint=~"/"} * 100) / node_filesystem_size_bytes{mountpoint=~"/"}) > 85)
+    for: 5m
+    labels:
+      severity: "Critical"
+    annotations:
+      summary: "Linux out of disk space less than 20GB and disk usage root more than 85% on {{ $labels.instance }} {{ $labels.ip }} "
+      description: "Linux out of disk space less than 20GB and disk usage root more than 85% on {{ $labels.instance }} {{ $labels.ip }}"
+
+### Containers
+- name: container
+  rules:
+
+##Status of Containers
+  - alert: container_absent
+    expr: absent(container_last_seen)
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Container {{ $labels.container_label_com_docker_compose_service }} absent on {{ $labels.instance }} {{ $labels.ip }}"
+      description: "Container {{ $labels.container_label_com_docker_compose_service }} absent on {{ $labels.instance }} {{ $labels.ip }}"
+
+##CPU RAM Containers
+  - alert: Container Cpu Usage
+    expr: (sum(rate(container_cpu_usage_seconds_total{name!=""}[3m])) BY (instance, name) * 100) > 80
+    for: 2m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Container CPU usage (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "Container CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: Container Memory Usage
+    expr: (sum(container_memory_working_set_bytes{name!=""}) BY (instance, name) / sum(container_spec_memory_limit_bytes > 0) BY (instance, name) * 100) > 80
+    for: 2m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Container Memory usage (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "Container Memory usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+###Kafka
+- name: kafka
+  rules:
+  - alert: Kafka Consumer Lag
+    expr: kafka_burrow_topic_partition_offset - on(partition, cluster, topic) group_right() kafka_burrow_partition_current_offset >= (kafka_burrow_topic_partition_offset offset 15m - on(partition, cluster, topic) group_right() kafka_burrow_partition_current_offset offset 15m) AND kafka_burrow_topic_partition_offset - on(partition, cluster, topic) group_right() kafka_burrow_partition_current_offset > 0
+    for: 15m
+    labels:
+      severity: "Warning"
+    annotations:
+      summary: "Kafka consumer lag (instance {{ $labels.instance }} - {{ $labels.ip }})"
+      description: "Kafka consumer has a 30 minutes and increasing lag\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

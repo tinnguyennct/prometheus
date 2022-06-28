@@ -15,16 +15,18 @@ services:
       - monitoring
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.36.2
     container_name: prometheus
-    restart: always
+    restart: unless-stopped
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./alert.rules:/alertmanager/alert.rules
+      - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
     depends_on:
       - cadvisor
@@ -34,35 +36,65 @@ services:
     networks:
       - monitoring
 
-
   alertmanager:
-    image: prom/alertmanager:v0.23.0
+    image: prom/alertmanager:v0.24.0
     container_name: alertmanager
     restart: unless-stopped
     ports:
       - 9093:9093
     volumes:
-      - ./alertmanager:/config
+      - ./alertmanager:/etc/alertmanager
       - alertmanager-data:/data
     command: 
-      - "--config.file=/config/alertmanager.yml"
+      - "--config.file=/etc/alertmanager/config.yml"
       - "--storage.path=/alertmanager"
-      - "--log.level=debug"
+    networks:
+      - monitoring
 
   grafana:
     image: grafana/grafana
     container_name: grafana
     volumes:
       - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - grafana_data:/var/lib/grafana
-    restart: always
+    restart: unless-stopped
     depends_on:
       - prometheus
     ports:
       - 3000:3000
     networks:
       - monitoring
-  
+
+#  karma:
+#    image: ghcr.io/prymitive/karma:v0.103
+#    container_name: karma
+#    environment:
+#      - ALERTMANAGER_URI=http://alertmanager:9093
+#    restart: unless-stopped
+#    ports:
+#      - 9099:8080
+#    depends_on:
+#      - alertmanager
+#    networks:
+#      - monitoring
+#
+  blackbox_exporter:
+    image: prom/blackbox-exporter:v0.21.0
+    container_name: blackbox_exporter
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+    command:
+      - "--config.file=/etc/blackbox/blackbox.yml"
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml
+
 networks:
   monitoring:
     external: true

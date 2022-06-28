@@ -1,0 +1,7 @@
+{{ define "text_alert_list" }}{{ range . }}
+{{ if .Labels.alertname }}<b>Alertname:</b> {{ .Labels.alertname }}{{ end }}
+{{ if .Labels.severity }}<b>Severity:</b> {{ .Labels.severity }}{{ end }}
+{{ if .Annotations.description }}<b>Description:</b> {{ .Annotations.description }}{{ end }}
+{{ end }}{{ end }}
+{{ define "telegram.default.message" }}{{ if gt (len .Alerts.Firing) 0 }}<b>🔥 Firing - CRM alerts:</b> {{ template "text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}<b>✅ Resolved  - CRM alerts:</b>{{ template "text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
