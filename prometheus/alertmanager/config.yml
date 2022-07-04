@@ -23,8 +23,8 @@ receivers:
     http_config:
       follow_redirects: true
     api_url: "https://api.telegram.org"
-    bot_token: "5501653439:AAFZ_mksEaPh4IfwLI6mjz1XYzfsYEUutR8"
-    chat_id: -796765326
+    bot_token: "5414687821:AAF28TJ3FmxnRRCG4NEK_DqyHbE2RZ5AMbE"
+    chat_id: -730234381
     message: '{{ template "telegram.default.message" . }}'
     parse_mode: HTML
 templates:

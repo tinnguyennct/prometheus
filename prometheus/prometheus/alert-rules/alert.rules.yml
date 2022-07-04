@@ -10,7 +10,7 @@ groups:
       severity: "Warning"
     annotations:
       summary: "Prometheus job missing (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "A Prometheus job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "A Prometheus job has disappeared on instance {{ $labels.instance }} - {{ $labels.ip }}"
 
   - alert: Alertmanager Missing
     expr: absent(up{job="alertmanager"})
@@ -19,7 +19,7 @@ groups:
       severity: "Warning"
     annotations:
       summary: "Prometheus AlertManager job missing (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "A Prometheus AlertManager job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "A Prometheus AlertManager job has disappeared on instance {{ $labels.instance }} - {{ $labels.ip }}"
 
   - alert: Service Is Down
     expr: up{job!="node"} == 0
@@ -57,7 +57,7 @@ groups:
       severity: "Warning"
     annotations:
       summary: "Host high CPU load (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "CPU load is > 80% on instance {{ $labels.instance }} - {{ $labels.ip }}"
 
 ## Disk Hosts
   - alert: Host Out Of Disk Space
@@ -67,7 +67,7 @@ groups:
       severity: "Critical"
     annotations:
       summary: "Host out of disk space (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "Disk is almost full (< 10% left) on instance {{ $labels.instance }} - {{ $labels.ip }}"
 
   - alert: Host out of inodes level 1
     expr: 5 < (node_filesystem_files_free{} / node_filesystem_files{} * 100) < 10
@@ -118,7 +118,7 @@ groups:
       severity: "Warning"
     annotations:
       summary: "Container CPU usage (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "Container CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "Container CPU usage is above 80% on instance {{ $labels.instance }} - {{ $labels.ip }}"
 
   - alert: Container Memory Usage
     expr: (sum(container_memory_working_set_bytes{name!=""}) BY (instance, name) / sum(container_spec_memory_limit_bytes > 0) BY (instance, name) * 100) > 80
@@ -127,7 +127,7 @@ groups:
       severity: "Warning"
     annotations:
       summary: "Container Memory usage (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "Container Memory usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "Container Memory usage is above 80% on instance {{ $labels.instance }} - {{ $labels.ip }}"
 
 ###Kafka
 - name: kafka
@@ -139,4 +139,4 @@ groups:
       severity: "Warning"
     annotations:
       summary: "Kafka consumer lag (instance {{ $labels.instance }} - {{ $labels.ip }})"
-      description: "Kafka consumer has a 30 minutes and increasing lag\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      description: "Kafka consumer has a 30 minutes and increasing lag on instance {{ $labels.instance }} - {{ $labels.ip }}"

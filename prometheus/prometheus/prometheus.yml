@@ -13,118 +13,159 @@ alerting:
   - scheme: http
     timeout: 30s
     static_configs:
-      - targets: ["10.96.11.47:9093"]
+      - targets: ["10.96.17.142:9093"]
 
 scrape_configs:
   - job_name: "prometheus"
     scrape_interval: 15s
     scrape_timeout: 15s
     static_configs:
-      - targets: ["10.96.11.47:9090"]
+      - targets: ["10.96.17.142:9090"]
         labels:
-          instance: prometheus
-          host: prometheus
-          ip: 10.96.11.47
-          site: CRM
-          application: prometheus-monitor-crm
-          infrastructure: monitor-crm
-          company: AIP
+          instance: prometheus-amilo
+          host: prometheus-amilo
+          ip: 10.96.17.142
+          site: Amilo
+          application: prometheus-monitor-amilo
+          infrastructure: monitor-amilo
+          company: Amilo
           teamowner: DevOps
-          environment: Prod
+          environment: Test
           tag: infrastructure
 
   - job_name: "alertmanager"
     scrape_interval: 15s
     scrape_timeout: 15s
     static_configs:
-      - targets: ["10.96.11.47:9093"]
+      - targets: ["10.96.17.142:9093"]
         labels:
-          instance: alertmanager
-          host: alertmanager
-          ip: 10.96.11.47
-          site: CRM
-          application: alertmanager-monitor-crm
-          infrastructure: monitor-crm
+          instance: alertmanager-amilo
+          host: alertmanager-amilo
+          ip: 10.96.17.142
+          site: Amilo
+          application: alertmanager-monitor-amilo
+          infrastructure: monitor-amilo
           company: AIP
           teamowner: DevOps
-          environment: Prod
+          environment: Test
+          tag: infrastructure
+
+  - job_name: "kafka"
+    scrape_interval: 15s
+    scrape_timeout: 15s
+    static_configs:
+      - targets: ["10.96.17.142:1309"]
+        labels:
+          instance: kafka-amilo-testing
+          host: kafka-amilo-testing
+          ip: 10.96.17.142
+          site: Amilo
+          application: kafka-amilo-testing
+          infrastructure: kafka-amilo-testing
+          company: AIP
+          teamowner: DevOps
+          environment: Test
+          tag: infrastructure
+      - targets: ["10.96.17.143:1309"]
+        labels:
+          instance: kafka-amilo-staging
+          host: kafka-amilo-staging
+          ip: 10.96.17.143
+          site: Amilo
+          application: kafka-amilo-staging
+          infrastructure: kafka-amilo-staging
+          company: AIP
+          teamowner: DevOps
+          environment: Staging
+          tag: infrastructure
+
+  - job_name: "kafka_connector"
+    scrape_interval: 15s
+    scrape_timeout: 15s
+    static_configs:
+      - targets: ["10.96.17.142:1308"]
+        labels:
+          instance: connector-amilo-testing
+          host: connector-amilo-testing
+          ip: 10.96.17.142
+          site: Amilo
+          application: connector-amilo-testing
+          infrastructure: connector-amilo-testing
+          company: AIP
+          teamowner: DevOps
+          environment: Test
+          tag: infrastructure
+      - targets: ["10.96.17.143:1308"]
+        labels:
+          instance: connector-amilo-staging
+          host: connector-amilo-staging
+          ip: 10.96.17.143
+          site: Amilo
+          application: connector-amilo-staging
+          infrastructure: connector-amilo-staging
+          company: AIP
+          teamowner: DevOps
+          environment: Staging
           tag: infrastructure
 
   - job_name: "node_exporter"
     scrape_interval: 15s
     scrape_timeout: 15s
     static_configs:
-      - targets: ["10.96.11.47:9100"]
+      - targets: ["10.96.17.142:9100"]
         labels:
-          instance: monitor-crm
-          host: monitor-crm
-          ip: 10.96.11.47
-          site: CRM
-          application: node-exporter-monitor-crm
-          infrastructure: monitor-crm
+          instance: node-exporter-amilo-testing
+          host: node-exporter-amilo-testing
+          ip: 10.96.17.142
+          site: Amilo
+          application: node-exporter-amilo-testing
+          infrastructure: node-exporter-amilo-testing
           company: AIP
           teamowner: DevOps
-          environment: Prod
+          environment: Test
           tag: infrastructure
-      - targets: ["10.96.11.178:9100"]
+      - targets: ["10.96.17.143:9100"]
         labels:
-          instance: prod-docker-crm
-          host: prod-docker-crm
-          ip: 10.96.11.178
-          site: CRM
-          application: node-exporter-prod-crm
-          infrastructure: prod-crm
+          instance: node-exporter-amilo-staging
+          host: node-exporter-amilo-staging
+          ip: 10.96.17.143
+          site: Amilo
+          application: node-exporter-amilo-staging
+          infrastructure: node-exporter-amilo-staging
           company: AIP
           teamowner: DevOps
-          environment: Prod
+          environment: Staging
           tag: infrastructure
 
   - job_name: "cadvisor"
     scrape_interval: 15s
     scrape_timeout: 15s
     static_configs:
-      - targets: ["10.96.11.47:8080"]
+      - targets: ["10.96.17.142:9111"]
         labels:
-          instance: monitor-crm
-          host: monitor-crm
-          ip: 10.96.11.47
-          site: CRM
-          application: cadvisor-monitor-crm
-          infrastructure: monitor-crm
+          instance: cadvisor-amilo-testing
+          host: cadvisor-amilo-testing
+          ip: 10.96.17.142
+          site: Amilo
+          application: cadvisor-amilo-testing
+          infrastructure: cadvisor-amilo-testing
           company: AIP
           teamowner: DevOps
-          environment: Prod
+          environment: Test
           tag: infrastructure
-      - targets: ["10.96.11.178:8080"]
+      - targets: ["10.96.17.143:9111"]
         labels:
-          instance: prod-docker-crm
-          host: prod-docker-crm
-          ip: 10.96.11.178
-          site: CRM
-          application: cadvisor-prod-crm
-          infrastructure: prod-crm
+          instance: cadvisor-amilo-staging
+          host: cadvisor-amilo-staging
+          ip: 10.96.17.143
+          site: Amilo
+          application: cadvisor-amilo-staging
+          infrastructure: cadvisor-amilo-staging
           company: AIP
           teamowner: DevOps
-          environment: Prod
+          environment: Staging
           tag: infrastructure
 
-#  - job_name: "kafka"
-#    scrape_interval: 15s
-#    scrape_timeout: 15s
-#    static_configs:
-#      - targets: ["10.96.17.142:1309"]
-#        labels:
-#          instance: kafka-amilo-testing
-#          host: kafka-amilo-testing
-#          ip: 10.96.17.142
-#          site: Amilo
-#          application: kafka-amilo-testing
-#          infrastructure: kafka-amilo-testing
-#          company: AIP
-#          teamowner: DevOps
-#          environment: Test
-#          tag: infrastructure
-#
 #  - job_name: 'blackbox_exporter'
 #    scrape_interval: 30s
 #    scrape_timeout: 30s
