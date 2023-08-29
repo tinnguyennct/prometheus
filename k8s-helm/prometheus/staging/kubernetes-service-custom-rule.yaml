@@ -1,0 +1,201 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: his-custom-alert-rules
+    role: alert-rules
+  name: kubernetes-service-custom-rule
+  namespace: monitoring
+spec:
+  groups:
+  - name: kubernetes-service-custom-rule:kubernetes-alert
+    rules:
+    - alert: KubernetesContainerOomKiller
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Container {{ $labels.container }} in pod {{ $labels.namespace }} {{ $labels.pod }} has been OOMKilled times in the last 10 minutes
+        summary: |
+          Kubernetes container oom killer instance {{ $labels.instance }} {{ $labels.pod }}
+      expr: ((kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total
+        offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]))>0
+      for: 1s
+      labels:
+        alert_name: KubernetesContainerOomKiller
+        alert_type: metric
+        cluster_name: 'staging'
+        comparison: greater than
+        duration: 1s
+        expression: ((kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total
+          offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]))>0
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesContainerOomKiller
+        severity: warning
+        threshold_value: "0"
+    - alert: KubernetesStatefulsetDown
+      annotations:
+        current_value: '{{ .Value }}'
+        description: A StatefulSet {{ $labels.statefulset }} went down
+        summary: |
+          Kubernetes StatefulSet {{ $labels.statefulset }} down instance {{ $labels.instance }}
+      expr: (kube_statefulset_status_replicas_ready / kube_statefulset_status_replicas_current)!=1
+      for: 1m
+      labels:
+        alert_name: KubernetesStatefulsetDown
+        alert_type: metric
+        cluster_name: 'staging'
+        comparison: not equal
+        duration: 1m
+        expression: (kube_statefulset_status_replicas_ready / kube_statefulset_status_replicas_current)!=1
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesStatefulsetDown
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesPodNotHealthy
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Pod {{ $labels.pod }} has been in a non-ready state for longer than 15 minutes
+        summary: |
+          Kubernetes Pod not healthy instance {{ $labels.instance }}
+      expr: min_over_time(sum by (namespace, pod, host_ip, job, pod,service) (kube_pod_status_phase{phase=~"Pending|Unknown|Failed",
+        service!="expose-kubernetes-metrics"})[15m:1m])>0
+      for: 1s
+      labels:
+        alert_name: KubernetesPodNotHealthy
+        alert_type: metric
+        cluster_name: 'staging'
+        comparison: greater than
+        duration: 1s
+        expression: min_over_time(sum by (namespace, pod, host_ip, job, pod,service)
+          (kube_pod_status_phase{phase=~"Pending|Unknown|Failed", service!="expose-kubernetes-metrics"})[15m:1m])>0
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesPodNotHealthy
+        severity: warning
+        threshold_value: "0"
+    - alert: KubernetesPodCrashLooping
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Pod {{ $labels.pod }} is crash looping
+        summary: |
+          Kubernetes pod crash looping instance {{ $labels.instance }}
+      expr: rate(kube_pod_container_status_restarts_total{}[10m]) * 60 * 5>1
+      for: 30s
+      labels:
+        alert_name: KubernetesPodCrashLooping
+        alert_type: metric
+        cluster_name: 'staging'
+        comparison: greater than
+        duration: 30s
+        expression: rate(kube_pod_container_status_restarts_total{}[10m]) * 60 * 5>1
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesPodCrashLooping
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesJobFailed
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Job {{$labels.namespace}} {{$labels.exported_job}} failed to complete
+        summary: |
+          Kubernetes Job failed on instance {{ $labels.host_ip }} {{ $labels.job }} {{ $labels.job_name }}
+      expr: kube_job_status_failed > 0
+      for: 1m
+      labels:
+        alert_name: KubernetesJobFailed
+        alert_type: metric
+        cluster_name: 'staging'
+        comparison: greater than
+        duration: 1m
+        expression: kube_job_status_failed > 0
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesJobFailed
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesPVCPending
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Kubernetes PVC {{ $labels.persistentvolumeclaim }} on {{ $labels.namespace }} is pending
+        summary: |
+          Kubernetes PVC pending instance {{ $labels.instance }}
+      expr: kube_persistentvolumeclaim_status_phase{phase="Pending"} == 1
+      for: 2m
+      labels:
+        alert_name: KubernetesPVCPending
+        alert_type: metric
+        cluster_name: 'staging'
+        duration: 2m
+        expression: kube_persistentvolumeclaim_status_phase{phase="Pending"} == 1
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesPVCPending
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesVolumeFullIn4Days
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Kubernetes Volume {{ $labels.persistentvolumeclaim }} on {{ $labels.namespace }} is expected to fill up within 4 days. Currently {{ $value | humanize }}% is available
+        summary: |
+          Kubernetes Volume full in 4 days instance {{ $labels.instance }}
+      expr: (predict_linear(kubelet_volume_stats_available_bytes[6h], 4 * 24 * 3600)) < 0
+      for: 1m
+      labels:
+        alert_name: KubernetesVolumeFullIn4Days
+        alert_type: metric
+        cluster_name: 'staging'
+        duration: 1m
+        expression: (predict_linear(kubelet_volume_stats_available_bytes[6h], 4 * 24 * 3600)) < 0
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesVolumeFullIn4Days
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesPersistentVolumeError
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Kubernetes Persistent volume {{ $labels.persistentvolume }}is in bad state
+        summary: |
+          Kubernetes Persistent volume error instance {{ $labels.instance }} {{ $labels.namespace }}
+      expr: (kube_persistentvolume_status_phase{phase=~"Failed|Pending"}) > 0
+      for: 1m
+      labels:
+        alert_name: KubernetesPersistentVolumeError
+        alert_type: metric
+        cluster_name: 'staging'
+        duration: 1m
+        expression: (kube_persistentvolume_status_phase{phase=~"Failed|Pending"}) > 0
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesPersistentVolumeError
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesStatefulsetReplicasMismatch
+      annotations:
+        current_value: '{{ .Value }}'
+        description: A StatefulSet does not match the expected number of replicas {{ $labels.replicaset }}
+        summary: |
+          Kubernetes StatefulSet replicas mismatch instance {{ $labels.instance }} {{ $labels.replicaset }}  {{ $labels.namespace }}
+      expr: (kube_statefulset_status_replicas_ready != kube_statefulset_status_replicas)
+      for: 5m
+      labels:
+        alert_name: KubernetesStatefulsetReplicasMismatch
+        alert_type: metric
+        cluster_name: 'staging'
+        duration: 5m
+        expression: (kube_statefulset_status_replicas_ready != kube_statefulset_status_replicas)
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesStatefulsetReplicasMismatch
+        severity: warning
+        threshold_value: "1"
+    - alert: KubernetesDeploymentReplicasMismatch
+      annotations:
+        current_value: '{{ .Value }}'
+        description: Deployment Replicas mismatch {{ $labels.replicaset }}
+        summary: |
+          Kubernetes Deployment replicas mismatch instance {{ $labels.instance }} {{ $labels.replicaset }} {{ $labels.namespace }}
+      expr: (kube_deployment_spec_replicas != kube_deployment_status_replicas_available)
+      for: 5m
+      labels:
+        alert_name: KubernetesDeploymentReplicasMismatch
+        alert_type: metric
+        cluster_name: 'staging'
+        duration: 5m
+        expression: (kube_deployment_spec_replicas != kube_deployment_status_replicas_available)
+        group_id: kubernetes-service-custom-rule:kubernetes-alert
+        rule_id: kubernetes-service-custom-rule:kubernetes-alert_KubernetesDeploymentReplicasMismatch
+        severity: warning
+        threshold_value: "1"
