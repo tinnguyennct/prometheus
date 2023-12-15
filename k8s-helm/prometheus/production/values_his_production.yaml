@@ -213,6 +213,9 @@ alertmanager:
       - receiver: 'telegram-his-k8s'
         matchers:
           - severity =~ "critical|warning|error"
+      - receiver: 'telegram-his-mysql'
+        matchers:
+          - group =~ "HISMySQLAlerts"
     receivers:
     - name: 'telegram-his-k8s'
       telegram_configs:
@@ -222,6 +225,15 @@ alertmanager:
         api_url: "https://api.telegram.org"
         bot_token: "5590539574:AAGEf3nJ0KrdZeploTSOEXDpwkCcGvLUsmw"
         chat_id: -797156035
+        parse_mode: HTML
+    - name: 'telegram-his-mysql'
+      telegram_configs:
+      - send_resolved: true
+        http_config:
+          follow_redirects: true
+        api_url: "https://api.telegram.org"
+        bot_token: "5590539574:AAGEf3nJ0KrdZeploTSOEXDpwkCcGvLUsmw"
+        chat_id: -4078347346
         parse_mode: HTML
     - name: 'null'
     templates:
@@ -3097,6 +3109,7 @@ prometheus:
           - https://home.kimdental.vn
           - https://media.kimdental.vn/minio/health/live
           - https://dcms-api.kimdental.vn/ping.php
+          - https://auth.kimdental.vn
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -3107,28 +3120,59 @@ prometheus:
     - job_name: "node_exporter_kim"
       metrics_path: /metrics
       static_configs:
-        - targets: ["10.96.17.148:9100"]
-          labels:
-            instance: node-kim-dsvc-stg
-            host: node-kim-dsvc-stg
-            ip: 10.96.17.148
-            site: Kim-Staging
-            application: node-kim-dsvc-stg
-            infrastructure: node-kim-dsvc-stg
-            company: AIP
-            teamowner: DevOps
-            environment: Staging
-            tag: infrastructure
         - targets: ["10.96.17.149:9100"]
           labels:
-            instance: node-kim-dsvc-prod
-            host: node-kim-dsvc-prod
+            instance: dc-his-prodsvc
+            host: dc-his-prodsvc
             ip: 10.96.17.149
             site: Kim-Production
             application: node-kim-dsvc-prod
-            infrastructure: node-kim-dsvc-prod
+            infrastructure: kim-dsvc-prod
             company: AIP
             teamowner: DevOps
+            environment: Production
+            tag: infrastructure
+        - targets: ["10.96.17.147:9100"]
+          labels:
+            instance: dc-his-prodelk
+            host: dc-his-prodelk
+            ip: 10.96.17.147
+            site: Kim-Production
+            application: node-kim-elk-prod
+            infrastructure: kim-elk-prod
+            company: AIP
+            teamowner: DevOps
+            environment: Production
+            tag: infrastructure
+    - job_name: "cadvisor_kim"
+      metrics_path: /metrics
+      static_configs:
+        - targets: ["10.96.17.149:9111"]
+          labels:
+            instance: dc-his-prodsvc
+            host: dc-his-prodsvc
+            ip: 10.96.17.149
+            site: Kim-Production
+            application: cadvisor-kim-dsvc-prod
+            infrastructure: kim-dsvc-prod
+            company: AIP
+            teamowner: DevOps
+            environment: Production
+            tag: infrastructure
+    - job_name: "mysql_exporter"
+      metrics_path: /metrics
+      static_configs:
+        - targets: ["10.96.17.149:9104"]
+          labels:
+            instance: dc-apphisdb01
+            host: dc-apphisdb01
+            ip: 10.96.11.25
+            site: Kim-Production
+            application: mysql-exporter-prod
+            infrastructure: kim-dsvc-prod
+            company: AIP
+            teamowner: DevOps
+            group: HISMySQLAlerts
             environment: Production
             tag: infrastructure
     # - job_name: kube-etcd
