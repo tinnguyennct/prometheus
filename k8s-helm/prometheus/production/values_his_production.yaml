@@ -223,8 +223,8 @@ alertmanager:
         http_config:
           follow_redirects: true
         api_url: "https://api.telegram.org"
-        bot_token: "5590539574:AAGEf3nJ0KrdZeploTSOEXDpwkCcGvLUsmw"
-        chat_id: -797156035
+        bot_token: "xxxxx"
+        chat_id: -xxxxx
         parse_mode: HTML
     - name: 'telegram-his-mysql'
       telegram_configs:
@@ -232,8 +232,8 @@ alertmanager:
         http_config:
           follow_redirects: true
         api_url: "https://api.telegram.org"
-        bot_token: "5590539574:AAGEf3nJ0KrdZeploTSOEXDpwkCcGvLUsmw"
-        chat_id: -4078347346
+        bot_token: "xxxxx"
+        chat_id: -xxxxx
         parse_mode: HTML
     - name: 'null'
     templates:
